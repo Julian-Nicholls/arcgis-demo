@@ -2,7 +2,7 @@
 
 An independent portfolio map of Norfolk County, Ontario. It displays live county parks, woodlots, and inventoried trees using React, TypeScript, Vite, and the ArcGIS Maps SDK for JavaScript. The app makes read-only requests to Norfolk County's public ArcGIS REST service; it does not copy or edit county data.
 
-**Status (November 8, 2026):** Initial vertical slice built and tested locally. Cloudflare deployment and the owner-managed ArcGIS Location Platform key are still to be configured.
+**Status (November 10, 2026):** Initial vertical slice is live at [arcgisdemo.apiariavera.com](https://arcgisdemo.apiariavera.com). Cloudflare Pages builds from `main`; the production map uses a restricted ArcGIS Location Platform key for Esri basemap styles.
 
 ## Run locally
 
@@ -38,27 +38,26 @@ The selected county service is [Parks_Recreation MapServer](https://gis2.norfolk
 
 ## ArcGIS Location Platform setup
 
-Use an **independent ArcGIS Location Platform account** owned by the project creator. Create an API key credential with only the basemap styles privilege; allow the production referrer `https://arcgisdemo.apiariavera.com` and a separate preview referrer only if needed. Set a short expiry and monitor usage. The value goes into `VITE_ARCGIS_API_KEY` in local `.env.local` and Cloudflare Pages environment variables. Never commit the key. A browser key is visible to visitors by design, so referrer and privilege restrictions matter.
+The project uses an **independent ArcGIS Location Platform account** owned by the project creator. Its API key credential has only the basemap styles privilege, no item access, and the production referrer `https://arcgisdemo.apiariavera.com`; it expires February 8, 2027. The value is stored as the masked `VITE_ARCGIS_API_KEY` production variable in Cloudflare Pages. Never commit the key. A browser key is visible to visitors by design, so referrer and privilege restrictions matter. Add the exact Pages preview hostname as a separate allowed referrer only if Esri basemap testing there is needed.
 
-With the key present, the app switches to Esri's `arcgis/topographic` basemap and keeps the SDK's Esri attribution. Without it, development uses OpenStreetMap. The project's free-tier goal depends on staying within Esri's [free allowances](https://developers.arcgis.com/pricing/). Esri says pay-as-you-go is off by default and a payment method is required to enable it; with no payment method, service access stops when a free allowance is exhausted rather than incurring charges. Check current account terms and usage before public launch. The code has no paid service calls or hosted Esri data.
+With the key present, the custom domain uses Esri's `arcgis/topographic` basemap and keeps the SDK's Esri attribution. The `pages.dev` hostname uses OpenStreetMap because it is outside the key's allowed referrer. Local development also uses OpenStreetMap unless a key is provided and localhost is separately allowed by Esri. The project's free-tier goal depends on staying within Esri's [free allowances](https://developers.arcgis.com/pricing/). Esri says pay-as-you-go is off by default and a payment method is required to enable it; with no payment method, service access stops when a free allowance is exhausted rather than incurring charges. At setup on November 10, pay-as-you-go was disabled and the account showed $0 owed. The code has no paid service calls or hosted Esri data.
 
 ## Cloudflare Pages deployment
 
-Connect `Julian-Nicholls/arcgis-demo` to a Pages project. Use:
+The `arcgis-demo` Pages project is connected to `Julian-Nicholls/arcgis-demo` on `main`. Its default hostname is [arcgis-demo-cqr.pages.dev](https://arcgis-demo-cqr.pages.dev). Production uses:
 
 | Setting | Value |
 | --- | --- |
 | Framework preset | React (Vite) |
 | Build command | `npm run build` |
 | Build output | `dist` |
-| Node version | 22 or newer |
-| Environment variable | `VITE_ARCGIS_API_KEY` (restricted browser key) |
+| Build environment variable | `NODE_VERSION=22` |
+| Production secret | `VITE_ARCGIS_API_KEY` (restricted browser key) |
 
-Deploy a preview, confirm map tiles, three county layers, popups, attribution, and mobile layout, then add `arcgisdemo.apiariavera.com` in **Pages → Custom domains**. Cloudflare may create the DNS record if it hosts the zone; otherwise add the CNAME it specifies. Associate the domain in Pages before changing DNS. No tunnel to the local PC is needed.
+Cloudflare Pages has attached `arcgisdemo.apiariavera.com` and created a proxied CNAME from `arcgisdemo` to `arcgis-demo-cqr.pages.dev`. The custom domain was checked for Esri basemap tiles and attribution, live county layers, tree points at street scale, and a tree popup. The Pages hostname uses OpenStreetMap. No tunnel to the local PC is needed.
 
-The app is currently a single route, so no redirect rule is needed. This repository has not been connected to a Cloudflare account or published yet.
+To deploy an update, commit and push to `main`, then open **Cloudflare → Workers & Pages → arcgis-demo → Deployments** and wait for a successful production build. Visit the custom domain and check the map. Changes to the Cloudflare secret take effect on the next deployment; use **Retry deployment** on the latest production deployment when changing only that setting. Rotate the Esri key before its expiry and check Esri usage. The app is a single route, so no redirect rule is needed.
 
 ## Portfolio scope
 
 The map is an independent demonstration and is unaffiliated with Norfolk County. It does not perform operational analysis or assert that the county's data is complete or current. Before using it for decisions, consult the county's official maps and data. An explicit reuse license for these exact REST layers was not located; attribution and a direct live connection are in place, and the county should be asked to confirm reuse terms before public promotion.
-

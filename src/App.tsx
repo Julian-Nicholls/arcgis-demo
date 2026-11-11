@@ -13,6 +13,9 @@ const initialVisibility = Object.fromEntries(
 ) as Visibility;
 
 const apiKey = import.meta.env.VITE_ARCGIS_API_KEY?.trim();
+const useEsriBasemap = Boolean(apiKey) && (
+  import.meta.env.DEV || window.location.hostname === "arcgisdemo.apiariavera.com"
+);
 
 function buildLayer(id: LayerId): FeatureLayer {
   const definition = layerDefinitions.find((entry) => entry.id === id)!;
@@ -93,7 +96,7 @@ export default function App() {
 
   useEffect(() => {
     if (!mapElement.current) return;
-    if (apiKey) esriConfig.apiKeys.basemapStyles = apiKey;
+    if (useEsriBasemap && apiKey) esriConfig.apiKeys.basemapStyles = apiKey;
 
     const layers = Object.fromEntries(
       layerDefinitions.map(({ id }) => [id, buildLayer(id)]),
@@ -101,7 +104,7 @@ export default function App() {
     layersRef.current = layers;
 
     const map = new ArcGISMap({
-      basemap: apiKey ? "arcgis/topographic" : "osm",
+      basemap: useEsriBasemap ? "arcgis/topographic" : "osm",
       layers: [layers.woodlots, layers.parks, layers.trees],
     });
     const view = new MapView({
@@ -201,7 +204,7 @@ export default function App() {
           </div>
           <div ref={mapElement} className="map-view" />
           <div className={`map-status ${loadState}`} role="status">{message}</div>
-          <div className="source-credit">Map data © Norfolk GIS · {apiKey ? "Esri basemap" : "OpenStreetMap basemap"}</div>
+          <div className="source-credit">Map data © Norfolk GIS · {useEsriBasemap ? "Esri basemap" : "OpenStreetMap basemap"}</div>
         </main>
       </div>
       <footer className="site-footer">A public-data exploration by Julian Nicholls <span>·</span> Unaffiliated with Norfolk County <span>·</span> For demonstration, not operational decisions</footer>
